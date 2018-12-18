@@ -19,23 +19,17 @@ module of generating vehicles is also included in this module as vehicle-generat
 '''
 import time, datetime
 import random
+import numpy as np
 
 random.seed(10)
-import numpy as np
-from z_ExistingPackages.Dijkstra2 import *
-from c_TimeCalculation.time_calculation import *
-from math import ceil, floor
-import csv
-import os
-from a_ReadRoadNetwork.class_lane import *
-from ..model.vehicle import Vehicle
+from model.vehicle import Vehicle
+import os, csv, math
 
 def timeslot2tsPair(timeslot):
     tlist = [t.split(".") for t in timeslot.split("-")]
     return datetime.datetime(2019, 1, 1, int(tlist[0][0]), int(tlist[0][1]), 0), datetime.datetime(2019, 1, 1, int(tlist[1][0]), int(tlist[1][1]))
 
 def vehicleMaxSpeed(type):
-    random.seed(10)
     maxSpeedInterval = {"car": [70, 80], "truck": [50, 70], "bus": [40, 60]}
     return random.randint(maxSpeedInterval[type][0], maxSpeedInterval[type][1])
 
@@ -62,7 +56,7 @@ def readOd(path):
         f.readline()
         r = csv.reader(f)
         for row in r:
-            (timeslot, vehicleType, origin, dest, volume) = (row[0], row[1], row[2], row[3], row[4])
+            (timeslot, vehicleType, origin, dest, volume) = (row[0], row[1], row[2], row[3], int(row[4]))
             tsPair = timeslot2tsPair(timeslot)
 
             if tsPair not in tsPairNodePairTypeMap: tsPairNodePairTypeMap[tsPair] = {}
@@ -81,13 +75,13 @@ def genVehicle(tsPairNodePairTypeMap, distribution, vehicleId, medianValueTime, 
                     vehicleVolume = tsPairNodePairTypeMap[tsPair][nodePair][vehicleType]
                     startTs, endTs = tsPair[0], tsPair[1]
                     duration = endTs - startTs
-                    origin, dest = nodePair[0], nodePair[1]
+                    origin, dest = network.idNodeMap[nodePair[0]], network.idNodeMap[nodePair[1]]
 
                     if not vehicleVolume: continue
 
                     interval = 1.0 * duration / vehicleVolume
                     for i in range(vehicleVolume):
-                        vehicleStartTs = startTs + int(ceil(interval * i))
+                        vehicleStartTs = startTs + datetime.timedelta(seconds=int(math.ceil(interval.seconds * i)))
                         vehicleId += 1
                         maxSpeed = vehicleMaxSpeed(vehicleType)
                         driverType = genDriverType()

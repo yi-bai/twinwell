@@ -1,5 +1,6 @@
 class Network(object):
-    def __init__(self):
+    def __init__(self, ts):
+        self.ts = ts
         self.idNodeMap = {}
         self.idLinkMap = {}
         self.idLaneMap = {}
