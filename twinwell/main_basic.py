@@ -6,7 +6,6 @@ Created on 2018/07/23
 import time, datetime
 import copy
 import random
-import numpy as np
 import csv
 
 def check_position(p0, p1, p2):
@@ -304,11 +303,11 @@ vehicleId = 0
 
 network = Network(startTs)
 
-fNode = open("/Users/baiyi/Downloads/drive-download-20181217T075734Z-001/Sioux Falls network/nodes-SiouxFalls_gong.csv")
+fNode = open("C:/Users/Bai/Downloads/drive-download-20190102T022105Z-001/Sioux Falls network/nodes-SiouxFalls_gong.csv")
 fNode.readline()
-fLane = open("/Users/baiyi/Downloads/drive-download-20181217T075734Z-001/Sioux Falls network/lanes-SiouxFalls_gong.csv")
+fLane = open("C:/Users/Bai/Downloads/drive-download-20190102T022105Z-001/Sioux Falls network/lanes-SiouxFalls_gong.csv")
 fLane.readline()
-pOd = "/Users/baiyi/Downloads/drive-download-20181217T075734Z-001/meso_by_python/OD_data"
+pOd = "C:/Users/Bai/Downloads/drive-download-20190102T022105Z-001/meso_by_python/OD_data"
 
 readNodes(fNode, network)
 readLanes(fLane, network)
@@ -318,4 +317,33 @@ genVehicle(tsPairNodePairTypeMap, "uniform", vehicleId, medianValueTime, network
 for vid in network.idVehicleMap:
     print(network.idVehicleMap[vid])
 
-exit()
+networks = [network]
+for i in range(totalSteps):
+    #print(i)
+    network = networks[-1] # current network
+
+    print(network.ts)
+    # update best route
+    for vid in network.idVehicleMap:
+        vehicle = network.idVehicleMap[vid]
+        if not vehicle.isRunning(network.ts): continue
+
+        vehicle.updateShortestPath()
+
+    # update lane features
+    network.updateLanes()
+
+    # update vehicle location
+    for vehicle in network.idVehicleMap.values():
+        if not vehicle.isRunning(network.ts): continue
+        vehicle.updateLocation(1) #update for 1 SECOND!
+
+    # decision
+
+    print(network.runningVehicleCount(), 'running')
+    print(network.finishVehicleCount(), 'finished')
+
+    # copy network to i+1
+    network_next = copy.deepcopy(network)
+    network_next.ts += datetime.timedelta(seconds=1)
+    networks.append(network_next)
