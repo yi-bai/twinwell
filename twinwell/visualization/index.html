@@ -1,0 +1,27 @@
+<html>
+<head>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="output.json"></script>
+</head>
+<body>
+<div id="app">
+  <svg  viewBox="0,0,5000,6000" width="800px">
+  	<circle v-for="node in networkData.nodes" :cx="node.x" :cy="node.y" r="20" stroke-width="2" fill="springgreen"/>
+  	<line v-for="link in networkData.links"
+  		:x1="networkData.nodes[link.node1_id].x"
+  		:y1="networkData.nodes[link.node1_id].y"
+  		:x2="networkData.nodes[link.node2_id].x"
+  		:y2="networkData.nodes[link.node2_id].y" style="stroke:rgb(99,99,99);stroke-width:2"/>
+  </svg>
+  {{ networkData.nodes }}
+</div>
+<script>
+var app = new Vue({
+  el: '#app',
+  data: {
+    networkData: networkData
+  }
+})
+</script>
+</body>
+</html>

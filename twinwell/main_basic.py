@@ -7,6 +7,7 @@ import time, datetime
 import copy
 import random
 import csv
+import json
 
 def check_position(p0, p1, p2):
     # this function checks the distance between point p0 to the line (connected from p1 to p2).
@@ -292,7 +293,7 @@ from util.readNetwork import *
 from util.readOd import *
 from model.network import Network
 startTs = datetime.datetime(2019, 1, 1, 7, 0, 0)
-totalSteps = 2000
+totalSteps = 5 #2000
 timeStep = 1
 
 jamDensity = 124
@@ -347,3 +348,42 @@ for i in range(totalSteps):
     network_next = copy.deepcopy(network)
     network_next.ts += datetime.timedelta(seconds=1)
     networks.append(network_next)
+
+def timestamp(dt):
+    return dt.timestamp() if dt else None
+
+def serializeNode(node):
+    return {'id': node.id, 'type': node.type, 'x': node.x, 'y': node.y}
+
+def serializeLink(link):
+    return {'id': link.id, 'type': link.type, 'node1_id': link.node1.id, 'node2_id': link.node2.id,
+        'lengthInKm': link.lengthInKm}
+
+def serializeLane(lane):
+    return {'id': lane.id, 'type': lane.type, 'link_id': lane.link.id,
+        'freeSpeed': lane.freeSpeed, 'freeTravelTime': lane.freeTravelTime, 'fixedCharge': lane.fixedCharge,
+        'speed': lane.speed, 'countPcu': lane.countPcu, 'density': lane.density, 'travelTime': lane.travelTime,
+        'charge': lane.charge}
+
+def serializeVehicle(ve):
+    return {'id': ve.id, 'type': ve.type, 'driverType': ve.driverType, 'maxSpeed': ve.maxSpeed,
+        'valueTime': ve.valueTime, 'probLaneChange': ve.probLaneChange, 'startTs': timestamp(ve.startTs),
+        'nodeOrigin_id': ve.nodeOrigin.id, 'nodeDest_id': ve.nodeDest.id, 'finishTs': timestamp(ve.finishTs),
+        'laneType': ve.laneType, 'currentLane_id': ve.currentLane.id, 'currentLaneProgress': ve.currentLaneProgress,
+        'timeBudget': ve.timeBudget}
+
+def serializeNetwork(network):
+    return {'ts': timestamp(network.ts), 'lanes': { l.id: serializeLane(l) for l in network.idLaneMap.values() },
+        'vehicles': { v.id: serializeVehicle(v) for v in network.idVehicleMap.values() if v.isRunning(network.ts)}}
+
+output = {}
+output["nodes"] = { n.id: serializeNode(n) for n in network.idNodeMap.values()}
+output["links"] = { l.id: serializeLink(l) for l in network.idLinkMap.values()}
+output["networks"] = []
+for network in networks:
+    output["networks"].append(serializeNetwork(network))
+
+print(output)
+f = open("visualization/output.json", "w")
+f.write("networkData = ")
+f.write(json.dumps(output))
