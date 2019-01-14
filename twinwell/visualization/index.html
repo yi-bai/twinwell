@@ -1,25 +1,70 @@
 <html>
 <head>
 <script src="https://cdn.jsdelivr.net/npm/vue"></script>
-<script src="output.json"></script>
+<script src="output2.json"></script>
+<style>
+image {
+	transition: 3s;
+	transform: translate(-75px, -75px);
+}
+</style>
 </head>
 <body>
 <div id="app">
+  <input type="number" v-model="currentTs"/>
   <svg  viewBox="0,0,5000,6000" width="800px">
-  	<circle v-for="node in networkData.nodes" :cx="node.x" :cy="node.y" r="20" stroke-width="2" fill="springgreen"/>
   	<line v-for="link in networkData.links"
   		:x1="networkData.nodes[link.node1_id].x"
   		:y1="networkData.nodes[link.node1_id].y"
   		:x2="networkData.nodes[link.node2_id].x"
-  		:y2="networkData.nodes[link.node2_id].y" style="stroke:rgb(99,99,99);stroke-width:2"/>
+  		:y2="networkData.nodes[link.node2_id].y" style="stroke:#ccc;stroke-width:20"/>
+  	<circle v-for="node in networkData.nodes" :cx="node.x" :cy="node.y" r="50" stroke-width="20" fill="grey"/>
+  	<image 
+  		:href="vehicle.id % 5 ? {'car':'img/car.svg','bus':'img/bus.svg','truck':'img/truck.svg'}[vehicle.type] : 'img/truck.svg'"
+  		v-for="vehicle in currentNetwork.vehicles"
+  		:style="{'z-index': vehicle.id % 3}"
+  		:key="vehicle.id"
+  		:x="positionx(currentNetwork.lanes[vehicle.currentLane_id], vehicle.currentLaneProgress)"
+  		:y="positiony(currentNetwork.lanes[vehicle.currentLane_id], vehicle.currentLaneProgress)"
+  		height="150" width="150"/>
   </svg>
-  {{ networkData.nodes }}
 </div>
 <script>
 var app = new Vue({
   el: '#app',
   data: {
-    networkData: networkData
+    networkData: networkData,
+    currentTs: networkData.networks[0].ts,
+    playing: true	
+  },
+  computed: {
+  	currentNetwork () {
+  		for(var i=0; ; i++){
+  			if(networkData.networks[i].ts == this.currentTs){
+  				return networkData.networks[i];
+  			}
+  		}
+  	}
+  },
+  methods: {
+  	positionx (lane, progress){
+  		x1 = (networkData.nodes[networkData.links[lane.link_id].node1_id].x)
+  		x2 = (networkData.nodes[networkData.links[lane.link_id].node2_id].x)
+  		return x1 + (x2 - x1) * progress
+  	},
+  	positiony (lane, progress){
+  		y1 = (networkData.nodes[networkData.links[lane.link_id].node1_id].y)
+  		y2 = (networkData.nodes[networkData.links[lane.link_id].node2_id].y)
+  		return y1 + (y2 - y1) * progress
+  	}
+  },
+  created(){
+  	var self = this
+  	setInterval(function(){
+  		if(self.playing){
+  			self.currentTs += (self.networkData.networks[1].ts - self.networkData.networks[0].ts);
+  		}
+  	}, 3000)
   }
 })
 </script>

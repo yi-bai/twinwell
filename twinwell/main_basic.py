@@ -293,8 +293,8 @@ from util.readNetwork import *
 from util.readOd import *
 from model.network import Network
 startTs = datetime.datetime(2019, 1, 1, 7, 0, 0)
-totalSteps = 5 #2000
-timeStep = 1
+totalSteps = 2000
+timeStep = 10
 
 jamDensity = 124
 medianValueTime = 50
@@ -319,7 +319,7 @@ for vid in network.idVehicleMap:
     print(network.idVehicleMap[vid])
 
 networks = [network]
-for i in range(totalSteps):
+for i in range(0, totalSteps, timeStep):
     #print(i)
     network = networks[-1] # current network
 
@@ -337,7 +337,7 @@ for i in range(totalSteps):
     # update vehicle location
     for vehicle in network.idVehicleMap.values():
         if not vehicle.isRunning(network.ts): continue
-        vehicle.updateLocation(1) #update for 1 SECOND!
+        vehicle.updateLocation(timeStep) #update for 1 SECOND!
 
     # decision
 
@@ -346,7 +346,7 @@ for i in range(totalSteps):
 
     # copy network to i+1
     network_next = copy.deepcopy(network)
-    network_next.ts += datetime.timedelta(seconds=1)
+    network_next.ts += datetime.timedelta(seconds=timeStep)
     networks.append(network_next)
 
 def timestamp(dt):
@@ -369,7 +369,7 @@ def serializeVehicle(ve):
     return {'id': ve.id, 'type': ve.type, 'driverType': ve.driverType, 'maxSpeed': ve.maxSpeed,
         'valueTime': ve.valueTime, 'probLaneChange': ve.probLaneChange, 'startTs': timestamp(ve.startTs),
         'nodeOrigin_id': ve.nodeOrigin.id, 'nodeDest_id': ve.nodeDest.id, 'finishTs': timestamp(ve.finishTs),
-        'laneType': ve.laneType, 'currentLane_id': ve.currentLane.id, 'currentLaneProgress': ve.currentLaneProgress,
+        'laneType': ve.laneType, 'currentLane_id': ve.currentLane.id if ve.currentLane else None, 'currentLaneProgress': ve.currentLaneProgress,
         'timeBudget': ve.timeBudget}
 
 def serializeNetwork(network):
@@ -383,7 +383,7 @@ output["networks"] = []
 for network in networks:
     output["networks"].append(serializeNetwork(network))
 
-print(output)
-f = open("visualization/output.json", "w")
+#print(output)
+f = open("visualization/output2.json", "w")
 f.write("networkData = ")
 f.write(json.dumps(output))
